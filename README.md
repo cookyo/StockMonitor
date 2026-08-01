@@ -41,3 +41,19 @@ bash -n run.sh
 ```
 
 当所有启用标的都没有任何成功响应时，`daily_monitor.py` 返回非零退出码；部分成功时返回 0，并在 manifest 中保留失败详情。
+
+## 结构化判读和历史库
+
+让 LLM 按 [SENTIMENT_RESULT_TEMPLATE.json](SENTIMENT_RESULT_TEMPLATE.json) 生成结构化结果，随后执行：
+
+```bash
+python3 process_sentiment.py data/sentiment_result_2026-08-01_尾盘.json
+```
+
+该命令会依次校验评分范围和自然映射、写入 `data/sentiment_history.db`，并生成适合飞书的 `data/llm_report_*.md`。同一交易日和时段默认禁止覆盖；确认重跑时显式增加 `--replace`。
+
+查询单个标的最近记录：
+
+```bash
+python3 sentiment_store.py history --code 688981 --limit 30
+```

@@ -13,8 +13,8 @@
 #   ./run.sh --slot 早盘               # 同日多次跑各自成组(早/午/尾), 免互相覆盖
 #   ./run.sh --slot 午盘 ; ./run.sh --slot 尾盘   # 不传 --slot 时自动用当前钟点 HHMM
 #
-# 抓完后: 大模型读 data/{源}_*.json,按 LLM_SENTIMENT_RUBRIC.md 的固定绝对尺判读,
-#         写成 data/llm_report_{date}.md,再用 send_feishu.py 推送飞书。
+# 抓完后: 大模型按 LLM_SENTIMENT_RUBRIC.md 生成 SENTIMENT_RESULT_TEMPLATE.json
+#         同构结果，再由 process_sentiment.py 入库并生成 Markdown，最后推送飞书。
 #
 # 飞书 webhook 只走环境变量/.env.local(已在 .gitignore,不进仓库):
 #   export FEISHU_WEBHOOK="https://open.larkoffice.com/open-apis/bot/v2/hook/xxxx"
@@ -70,4 +70,4 @@ echo "==> 抓取评论(带正文) · 数据源: ${SOURCE}${SLOT:+ · 时段: ${S
 
 echo "==> 完成。抓取清单见 ./data/fetch_manifest_*.md"
 echo "    每个标的的实际数据文件以抓取清单中的 file/merged_file 为准"
-echo "    下一步:大模型读这些评论按 LLM_SENTIMENT_RUBRIC.md 判读 -> data/llm_report_*.md -> send_feishu.py 推送。"
+echo "    下一步:生成结构化情绪 JSON -> process_sentiment.py 入库/渲染 -> send_feishu.py 推送。"

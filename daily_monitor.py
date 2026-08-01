@@ -9,8 +9,8 @@
   4) 生成抓取清单 data/fetch_manifest_{date}.{json,md}(抓了哪些、各多少帖、当日涨跌)
 
 情绪判读**不在本脚本内**: 由大模型直接读 data/ 下的完整评论文件,
-按 LLM_SENTIMENT_RUBRIC.md 的固定绝对尺打分,写成 data/llm_report_{date}.md,
-再用 send_feishu.py 推送。本脚本只负责抓取与清单,不做任何打分。
+按 LLM_SENTIMENT_RUBRIC.md 的固定绝对尺生成结构化 JSON，再由
+process_sentiment.py 校验、保存历史并生成 Markdown。本脚本只负责抓取与清单。
 """
 
 from __future__ import annotations

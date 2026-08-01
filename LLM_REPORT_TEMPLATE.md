@@ -1,7 +1,9 @@
 # 股吧情绪日报(LLM 判读) · {DATE}
 
 <!--
-每日 LLM 情绪报告模板。用法:
+每日 LLM 情绪报告的手工备用模板。推荐流程是先按
+SENTIMENT_RESULT_TEMPLATE.json 生成结构化结果，再由 process_sentiment.py 自动渲染。
+手工用法:
   1. 先 ./run.sh 抓当天评论；以 fetch_manifest 的 file/merged_file 选择判读语料
   2. LLM(我)逐个读评论原文,按 LLM_SENTIMENT_RUBRIC.md 的固定绝对尺打分
   3. 把本模板复制为 data/llm_report_{DATE}.md,填好下面各段

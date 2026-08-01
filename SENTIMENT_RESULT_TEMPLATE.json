@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "run": {
+    "trade_date": "2026-08-01",
+    "slot": "尾盘",
+    "generated_at": "2026-08-01T15:20:00+08:00",
+    "market_context": "大盘震荡分化，科技板块活跃。",
+    "model": "填写实际判读模型",
+    "source_manifest": "data/fetch_manifest_2026-08-01_尾盘.json"
+  },
+  "items": [
+    {
+      "code": "688981",
+      "name": "中芯国际",
+      "security_type": "stock",
+      "panic_index": 62,
+      "confidence": 0.82,
+      "sample_count": 105,
+      "mean_sentiment": -0.24,
+      "summary": "高位分歧增加，但尚未出现集中割肉。",
+      "evidence": [
+        {
+          "post_id": "填写原帖 ID",
+          "source": "eastmoney",
+          "quote": "填写能支撑结论的短摘录"
+        }
+      ]
+    }
+  ]
+}
