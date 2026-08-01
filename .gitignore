@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# 抓取输出(体积增长快,可随时用 fetch_comments.py 重新抓取)
+data/
+
+# 机密: 飞书 webhook / LLM key 等,严禁提交
+.env
+.env.local
+.secrets
+*.local
+
+# 系统
+.DS_Store

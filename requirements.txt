@@ -1,0 +1,2 @@
+# 用于 macOS python.org 解释器的可信 CA 证书包；代码仍兼容系统 CA。
+certifi>=2023.7.22

@@ -1,0 +1,43 @@
+# StockMonitor
+
+抓取 A 股公开讨论并生成供 LLM 判读的情绪语料。默认数据源策略是：
+
+1. 每个标的先请求东方财富（移动 JSON API，失败后再尝试东财 PC 页面）。
+2. 东财成功后停止，不请求百度和新浪；明确返回当日 0 帖也视为成功。
+3. 只有东财失败时才同时抓取百度和新浪，并生成同一时段的 `merged_*` 文件。
+
+## 使用
+
+```bash
+python3 -m pip install -r requirements.txt
+./run.sh --slot 早盘
+```
+
+日常入口默认使用 `--source auto`。诊断单一来源时可以强制指定：
+
+```bash
+./run.sh --source eastmoney
+./run.sh --source baidu
+./run.sh --source sina
+```
+
+抓取结果和 manifest 写入 `data/`。判读时优先读取 manifest 中的：
+
+- `file`：东财成功或强制单源时的语料。
+- `merged_file`：东财失败后，百度和新浪备用语料的合并结果。
+
+同日多次运行请传 `--slot`。手动重新合并备用源时：
+
+```bash
+python3 merge_sources.py --date 2026-08-01 --slot 早盘
+```
+
+## 验证
+
+```bash
+python3 -m unittest discover -s tests -v
+python3 -m compileall -q .
+bash -n run.sh
+```
+
+当所有启用标的都没有任何成功响应时，`daily_monitor.py` 返回非零退出码；部分成功时返回 0，并在 manifest 中保留失败详情。

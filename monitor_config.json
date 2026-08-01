@@ -1,0 +1,32 @@
+{
+  "_comment": "监控清单: run.sh 默认逐标的先抓东财;东财成功(含当日0帖)不请求备用源,仅限流/网络/解析失败时同时抓百度+新浪并合并。type: stock/etf/index(用于自动补前缀,ETF/指数必须标对,否则抓不到); code 传裸代码即可; enabled=false 可临时跳过。pages_by_source: 三源翻页语义不同(东财 ps=20/页真偏移; 新浪 num=60/页真偏移; 百度 pn 是步进≈1 滑动窗口且内部 max(pages,60) 兜底),故按源分别给页数;缺某源时回退单值 pages,再回退各模块 DEFAULT_PAGES。",
+  "defaults": {
+    "pages_by_source": { "eastmoney": 5, "sina": 3, "baidu": 60 },
+    "max_posts": 200,
+    "with_body": true,
+    "sort_by": "published"
+  },
+  "items": [
+    { "name": "上证指数",      "code": "000001", "type": "index", "enabled": true },
+    { "name": "创业板指",      "code": "399006", "type": "index", "enabled": true },
+    { "name": "科创50指数",    "code": "000688", "type": "index", "enabled": true },
+    { "name": "科创50ETF华夏", "code": "588000", "type": "etf",   "enabled": false },
+    { "name": "沪深300ETF",    "code": "510300", "type": "etf",   "enabled": true },
+    { "name": "贵州茅台",      "code": "600519", "type": "stock", "enabled": false },
+    { "name": "中芯国际",      "code": "688981", "type": "stock", "enabled": true },
+    { "name": "招商银行",      "code": "600036", "type": "stock", "enabled": true },
+    { "name": "东方财富",      "code": "300059", "type": "stock", "enabled": true },
+    { "name": "万华化学",      "code": "600309", "type": "stock", "enabled": true },
+    { "name": "通富微电",      "code": "002156", "type": "stock", "enabled": true },
+    { "name": "利通电子",      "code": "603629", "type": "stock", "enabled": true },
+    { "name": "紫光股份",      "code": "000938", "type": "stock", "enabled": true },
+    { "name": "德明利",        "code": "001309", "type": "stock", "enabled": true },
+    { "name": "兆易创新",      "code": "603986", "type": "stock", "enabled": true },
+    { "name": "东山精密",      "code": "002384", "type": "stock", "enabled": true },
+    { "name": "天赐材料",      "code": "002709", "type": "stock", "enabled": true },
+    { "name": "华友钴业",      "code": "603799", "type": "stock", "enabled": true },
+    { "name": "云南锗业",      "code": "002428", "type": "stock", "enabled": true },
+    { "name": "蓝色光标",      "code": "300058", "type": "stock", "enabled": true },
+    { "name": "海康威视",      "code": "002415", "type": "stock", "enabled": false }
+  ]
+}
