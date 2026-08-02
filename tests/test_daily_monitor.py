@@ -1,5 +1,6 @@
 import datetime as dt
 import json
+import ssl
 import tempfile
 import unittest
 from pathlib import Path
@@ -7,6 +8,7 @@ from unittest import mock
 
 import daily_monitor as dm
 import fetch_em_api
+import fetch_quotes
 
 
 def result(source: str, *, error: str = "", posts=None, path: str = "") -> dict:
@@ -78,8 +80,10 @@ class SourcePolicyTests(unittest.TestCase):
 
 class ConfigAndExitCodeTests(unittest.TestCase):
     def test_eastmoney_ssl_context_keeps_verification_enabled(self) -> None:
-        self.assertEqual(fetch_em_api.ssl.CERT_REQUIRED, fetch_em_api._SSL_CTX.verify_mode)
+        self.assertEqual(ssl.CERT_REQUIRED, fetch_em_api._SSL_CTX.verify_mode)
         self.assertTrue(fetch_em_api._SSL_CTX.check_hostname)
+        self.assertEqual(ssl.CERT_REQUIRED, fetch_quotes._SSL_CTX.verify_mode)
+        self.assertTrue(fetch_quotes._SSL_CTX.check_hostname)
 
     def test_load_config_applies_defaults_and_rejects_duplicates(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

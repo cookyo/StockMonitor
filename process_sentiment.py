@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sqlite3
 import sys
@@ -35,6 +36,32 @@ def write_text_atomic(path: Path, content: str) -> None:
     temporary.replace(path)
 
 
+def load_market_snapshots(report: SentimentReport, input_path: Path) -> dict[str, dict]:
+    """从抓取 manifest 读取轻量量价事实；缺失时安静降级为纯情绪报告。"""
+    if not report.source_manifest:
+        return {}
+    raw_path = Path(report.source_manifest)
+    candidates = [raw_path] if raw_path.is_absolute() else [BASE_DIR / raw_path, input_path.parent / raw_path.name]
+    manifest_path = next((path for path in candidates if path.exists()), None)
+    if manifest_path is None:
+        return {}
+    try:
+        rows = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if not isinstance(rows, list):
+        return {}
+    snapshots: dict[str, dict] = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        code = str(row.get("code") or "")
+        market = row.get("market")
+        if code and isinstance(market, dict) and market:
+            snapshots.setdefault(code, market)
+    return snapshots
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="校验情绪 JSON -> 保存 SQLite 历史 -> 生成飞书 Markdown",
@@ -47,8 +74,9 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
-        report = SentimentReport.from_path(Path(args.input))
-        markdown = render_markdown(report)
+        input_path = Path(args.input)
+        report = SentimentReport.from_path(input_path)
+        markdown = render_markdown(report, load_market_snapshots(report, input_path))
         if not args.no_store:
             run_id = SentimentStore(Path(args.db)).save_report(report, replace=args.replace)
             print(f"[历史库] run_id={run_id} -> {args.db}")

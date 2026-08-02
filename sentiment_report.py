@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from sentiment_models import SentimentItem, SentimentReport, panic_band, panic_group
 
 
@@ -15,7 +17,32 @@ def _short_quote(item: SentimentItem, max_chars: int = 80) -> str:
     return quote
 
 
-def render_markdown(report: SentimentReport) -> str:
+def _market_text(market: dict[str, Any]) -> str:
+    if not market:
+        return ""
+    parts = []
+    pct = market.get("pct_chg")
+    ret5 = market.get("return_5d_pct")
+    volume_ratio = market.get("volume_ratio_5d")
+    if isinstance(pct, (int, float)):
+        parts.append(f"当日 {pct:+.2f}%")
+    if isinstance(ret5, (int, float)):
+        parts.append(f"5日 {ret5:+.2f}%")
+    if isinstance(volume_ratio, (int, float)):
+        parts.append(f"量比 {volume_ratio:.2f}x")
+    if not parts:
+        return ""
+    date_note = ""
+    if market.get("is_target_trade_date") is False and market.get("trade_date"):
+        date_note = f"（截至 {market['trade_date']}）"
+    return f" · 行情{date_note} " + " / ".join(parts)
+
+
+def render_markdown(
+    report: SentimentReport,
+    market_by_code: dict[str, dict[str, Any]] | None = None,
+) -> str:
+    market_by_code = market_by_code or {}
     lines = [
         f"# 股吧情绪日报 · {report.trade_date.isoformat()} · {report.slot}",
         "",
@@ -44,9 +71,10 @@ def render_markdown(report: SentimentReport) -> str:
             confidence = f"{item.confidence:.0%}"
             evidence = _short_quote(item)
             evidence_text = f" · 证据：“{evidence}”" if evidence else ""
+            market_text = _market_text(market_by_code.get(item.code, {}))
             lines.append(
                 f"- {item.name}({item.code}) · **{score} {panic_band(item.panic_index)}**"
-                f" · 置信度 {confidence} · 样本 {item.sample_count} · {item.summary}"
+                f" · 置信度 {confidence} · 样本 {item.sample_count}{market_text} · {item.summary}"
                 f"{evidence_text}"
             )
 

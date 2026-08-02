@@ -33,7 +33,6 @@ from __future__ import annotations
 import argparse
 import gzip
 import json
-import ssl
 import sys
 import time
 from datetime import date
@@ -51,6 +50,7 @@ from fetch_comments import (
     resolve_guba_symbol,
     save_rows,
 )
+from tls_context import create_verified_context
 
 API_URL = "https://gbapi.eastmoney.com/webarticlelist/api/Article/WebArticleList"
 REFERER = "https://mguba.eastmoney.com/"
@@ -64,14 +64,7 @@ _PS = 20          # 每页条数
 _RETRY = 3        # 单页退避重试次数
 _RETRY_BASE = 0.6
 
-# macOS 的 python.org 解释器可能未接入系统钥匙串。优先使用 certifi 的可信 CA
-# 包（若已安装），否则回退系统默认 CA；两条路径都保留证书与主机名校验。
-try:
-    import certifi
-
-    _SSL_CTX = ssl.create_default_context(cafile=certifi.where())
-except ImportError:
-    _SSL_CTX = ssl.create_default_context()
+_SSL_CTX = create_verified_context()
 
 def _get_json(code: str, page: int) -> dict:
     """请求一页, 返回解析后的 JSON envelope。网络异常按调用方约定上抛。"""

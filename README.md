@@ -26,6 +26,8 @@ python3 -m pip install -r requirements.txt
 - `file`：东财成功或强制单源时的语料。
 - `merged_file`：东财失败后，百度和新浪备用语料的合并结果。
 
+manifest 同时包含轻量 `market` 快照：收盘价、当日/5日涨跌、振幅、5日量比、换手率和成交额。它们只用于给情绪提供量价背景；均线、指标、信号、板块、资金和策略分析继续由本地 `light_stock2` 负责。StockMonitor 不导入 `light_stock2` 内部模块，也不直接依赖其 SQLite 表结构。
+
 同日多次运行请传 `--slot`。手动重新合并备用源时：
 
 ```bash

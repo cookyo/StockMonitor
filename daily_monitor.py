@@ -184,25 +184,22 @@ def fetch_item_with_policy(
                     result["merge_error"] = f"备用源合并失败: {exc}"
     return [primary, *backups]
 
-def _today_pct_chg(code: str, target: dt.date) -> float | None:
-    """当日涨跌%,仅作为 LLM 判读的背景信息,取不到不影响抓取。"""
+def _market_snapshot(code: str, target: dt.date) -> dict:
+    """轻量量价背景；复杂指标、信号和历史分析由 light_stock2 负责。"""
     if not _HAS_QUOTES:
-        return None
+        return {}
     try:
-        beg = (target - dt.timedelta(days=10)).isoformat()
+        beg = (target - dt.timedelta(days=45)).isoformat()
         rows = fq.fetch_daily(code, beg, target.isoformat())
-        for r in reversed(rows):
-            if r["trade_date"] == target.isoformat():
-                return r.get("pct_chg")
-    except Exception:
-        return None
-    return None
+        return fq.summarize_daily(rows, target.isoformat())
+    except Exception as exc:
+        return {"error": str(exc)}
 
 # --------------------------------------------------------------------------
 # 抓取清单
 # --------------------------------------------------------------------------
 
-def build_manifest_row(item: dict, fetched: dict, pct_chg: float | None) -> dict:
+def build_manifest_row(item: dict, fetched: dict, market: dict) -> dict:
     return {
         "name": item.get("name", item["code"]),
         "code": item["code"],
@@ -211,7 +208,8 @@ def build_manifest_row(item: dict, fetched: dict, pct_chg: float | None) -> dict
         "symbol": fetched["symbol"],
         "count": len(fetched["posts"]),
         "pages": fetched.get("pages", 0),
-        "pct_chg": pct_chg if not fetched["error"] else None,
+        "pct_chg": market.get("pct_chg") if not fetched["error"] else None,
+        "market": market if not fetched["error"] else {},
         "file": fetched.get("path", ""),
         "merged_file": fetched.get("merged_path", ""),
         "error": fetched["error"],
@@ -232,8 +230,13 @@ def render_manifest_md(rows: list[dict], target: dt.date, slot: str = "") -> str
              ""]
     for r in sorted(ok, key=lambda x: x["count"], reverse=True):
         pct = "" if r["pct_chg"] is None else f" | 当日{r['pct_chg']:+.2f}%"
+        market = r.get("market") or {}
+        ret5 = market.get("return_5d_pct")
+        vol_ratio = market.get("volume_ratio_5d")
+        ret5_text = "" if ret5 is None else f" | 5日{ret5:+.2f}%"
+        vol_text = "" if vol_ratio is None else f" | 量比{vol_ratio:.2f}x"
         merged = f" · 合并 `{Path(r['merged_file']).name}`" if r.get("merged_file") else ""
-        lines.append(f"- [{r['source']}] {r['name']}({r['code']}/{r['type']}) · {r['count']}帖{pct} · `{Path(r['file']).name}`{merged}")
+        lines.append(f"- [{r['source']}] {r['name']}({r['code']}/{r['type']}) · {r['count']}帖{pct}{ret5_text}{vol_text} · `{Path(r['file']).name}`{merged}")
     if empty:
         lines.append("")
         lines.append("**当日无匹配帖:** " + "、".join(f"[{r['source']}] {r['name']}({r['code']})" for r in empty))
@@ -247,6 +250,14 @@ def render_manifest_md(rows: list[dict], target: dt.date, slot: str = "") -> str
     if merge_fail:
         lines.append("")
         lines.append("**备用源合并失败:** " + "、".join(f"{r['name']}({r['merge_error']})" for r in merge_fail))
+    market_fail: dict[str, str] = {}
+    for row in rows:
+        market_error = (row.get("market") or {}).get("error")
+        if market_error:
+            market_fail.setdefault(row["code"], f"{row['name']}({market_error})")
+    if market_fail:
+        lines.append("")
+        lines.append("**行情背景失败(不影响评论抓取):** " + "、".join(market_fail.values()))
     lines.append("")
     lines.append("> 完整评论(带正文)已落 data/;情绪判读由大模型读评论后按 LLM_SENTIMENT_RUBRIC.md 产出。")
     return "\n".join(lines)
@@ -279,10 +290,10 @@ def run(target: dt.date, config_path: Path, source: str = "auto",
         fetched_results = fetch_item_with_policy(item, target, source=source, slot=slot_tag)
         if any(not result["error"] for result in fetched_results):
             successful_targets += 1
-            pct_chg = _today_pct_chg(item["code"], target)
+            market = _market_snapshot(item["code"], target)
         else:
-            pct_chg = None
-        manifest.extend(build_manifest_row(item, result, pct_chg) for result in fetched_results)
+            market = {}
+        manifest.extend(build_manifest_row(item, result, market) for result in fetched_results)
 
     md = render_manifest_md(manifest, target, slot=slot_tag)
     mf_json = DATA_DIR / f"fetch_manifest_{target.isoformat()}_{slot_tag}.json"

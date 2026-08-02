@@ -71,12 +71,16 @@ class SentimentModelTests(unittest.TestCase):
         calm = dict(raw["items"][0])
         calm.update({"code": "600519", "name": "贵州茅台", "panic_index": 20})
         raw["items"].append(calm)
-        markdown = render_markdown(SentimentReport.from_dict(raw))
+        markdown = render_markdown(
+            SentimentReport.from_dict(raw),
+            {"688981": {"pct_chg": 4.59, "return_5d_pct": 8.2, "volume_ratio_5d": 1.4}},
+        )
 
         self.assertIn("🟢 亢奋/乐观", markdown)
         self.assertIn("🟡 纠结/偏谨慎", markdown)
         self.assertLess(markdown.index("贵州茅台"), markdown.index("中芯国际"))
         self.assertNotIn("|---", markdown)
+        self.assertIn("当日 +4.59% / 5日 +8.20% / 量比 1.40x", markdown)
 
 
 class SentimentStoreTests(unittest.TestCase):
